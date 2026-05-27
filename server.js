@@ -1,106 +1,68 @@
 const express = require("express");
-const session = require("express-session");
-const fs = require("fs");
-const cors = require("cors");
-
 const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors());
-app.use(express.static("public"));
 
-app.use(session({
-  secret: "ljh-secret",
-  resave: false,
-  saveUninitialized: true
-}));
+/* =========================
+   ROTAS PRINCIPAIS
+========================= */
 
-const read = (file) => JSON.parse(fs.readFileSync(`./data/${file}`));
-const write = (file, data) =>
-  fs.writeFileSync(`./data/${file}`, JSON.stringify(data, null, 2));
+// Página inicial -> login
+app.get("/", (req, res) => {
+  res.redirect("/login");
+});
 
-if (!fs.existsSync("./data")) fs.mkdirSync("./data");
-if (!fs.existsSync("./data/keys.json")) write("keys.json", []);
-if (!fs.existsSync("./data/users.json")) write("users.json", [
-  { username: "owner", password: "owner40028922", role: "owner" }
-]);
-if (!fs.existsSync("./data/logs.json")) write("logs.json", []);
+// LOGIN PAGE
+app.get("/login", (req, res) => {
+  res.send(`
+    <html>
+      <body style="background:#111;color:white;font-family:Arial;display:flex;justify-content:center;align-items:center;height:100vh;">
+        <form method="POST" action="/login" style="display:flex;flex-direction:column;gap:10px;width:200px;">
+          <h2>Login</h2>
+          <input name="user" placeholder="Usuário" style="padding:8px;">
+          <input name="pass" type="password" placeholder="Senha" style="padding:8px;">
+          <button style="padding:8px;background:green;color:white;">Entrar</button>
+        </form>
+      </body>
+    </html>
+  `);
+});
 
-function log(action) {
-  const logs = read("logs.json");
-  logs.push({ action, time: new Date().toISOString() });
-  write("logs.json", logs);
-}
-
+// LOGIN CHECK
 app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  const users = read("users.json");
+  const { user, pass } = req.body;
 
-  const user = users.find(u => u.username === username && u.password === password);
-
-  if (!user) return res.json({ ok: false });
-
-  req.session.user = user;
-  res.json({ ok: true, user });
-});
-
-app.get("/keys", (req, res) => {
-  const keys = read("keys.json");
-
-  const updated = keys.map(k => {
-    if (k.expiresAt && Date.now() > k.expiresAt) {
-      k.status = "expired";
-    }
-    return k;
-  });
-
-  write("keys.json", updated);
-  res.json(updated);
-});
-
-app.post("/generate", (req, res) => {
-  const { amount, time } = req.body;
-  const keys = read("keys.json");
-
-  for (let i = 0; i < amount; i++) {
-    const key = "LJH-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-
-    keys.push({
-      key,
-      status: "available",
-      createdAt: Date.now(),
-      expiresAt: Date.now() + (time * 60000),
-      usedBy: null
-    });
+  // LOGIN FIXO (owner)
+  if (user === "owner" && pass === "owner40028922") {
+    return res.redirect("/dashboard");
   }
 
-  write("keys.json", keys);
-  log(`Generated ${amount} keys`);
-
-  res.json({ ok: true });
+  return res.send("Login inválido ❌");
 });
 
-app.post("/users/create", (req, res) => {
-  const users = read("users.json");
-  const { username, password } = req.body;
+// DASHBOARD
+app.get("/dashboard", (req, res) => {
+  res.send(`
+    <html>
+      <body style="background:#0d0d0d;color:white;font-family:Arial;padding:20px;">
+        <h1>Dashboard 🔥</h1>
+        <p>Bem-vindo ao painel owner</p>
 
-  users.push({ username, password, role: "mod" });
-
-  write("users.json", users);
-  log(`User created: ${username}`);
-
-  res.json({ ok: true });
+        <div style="margin-top:20px;">
+          <button onclick="location.href='/login'">Sair</button>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
-app.post("/keys/delete", (req, res) => {
-  let keys = read("keys.json");
-  const { key } = req.body;
+/* =========================
+   START SERVER
+========================= */
 
-  keys = keys.filter(k => k.key !== key);
-
-  write("keys.json", keys);
-  log(`Deleted key ${key}`);
-
-  res.json({ ok: true });
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server rodando na porta " + PORT);
 });
-
-app.listen(3000, () => console.log("Server running on port 3000"));
