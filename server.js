@@ -1,21 +1,22 @@
 const express = require("express");
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-/* =========================
-   ROTAS PRINCIPAIS
-========================= */
+// HEALTH CHECK (importante no Railway)
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
-// Página inicial -> login
+// HOME
 app.get("/", (req, res) => {
   res.redirect("/login");
 });
 
-// LOGIN PAGE
+// LOGIN
 app.get("/login", (req, res) => {
   res.send(`
     <html>
@@ -31,11 +32,10 @@ app.get("/login", (req, res) => {
   `);
 });
 
-// LOGIN CHECK
+// LOGIN POST
 app.post("/login", (req, res) => {
   const { user, pass } = req.body;
 
-  // LOGIN FIXO (owner)
   if (user === "owner" && pass === "owner40028922") {
     return res.redirect("/dashboard");
   }
@@ -50,19 +50,13 @@ app.get("/dashboard", (req, res) => {
       <body style="background:#0d0d0d;color:white;font-family:Arial;padding:20px;">
         <h1>Dashboard 🔥</h1>
         <p>Bem-vindo ao painel owner</p>
-
-        <div style="margin-top:20px;">
-          <button onclick="location.href='/login'">Sair</button>
-        </div>
+        <button onclick="location.href='/login'">Sair</button>
       </body>
     </html>
   `);
 });
 
-/* =========================
-   START SERVER
-========================= */
-
+// START
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server rodando na porta " + PORT);
 });
