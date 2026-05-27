@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Void</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #e0e0e0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #111; border: 1px solid #1a1a1a; padding: 40px; width: 100%; max-width: 440px; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #00ff88; box-shadow: 0 0 15px #00ff88; opacity: 0.6; }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo svg { color: #00ff88; width: 48px; height: 48px; margin-bottom: 12px; }
+    h1 { color: #00ff88; font-size: 1.6rem; letter-spacing: 0.3em; text-transform: uppercase; text-align: center; }
+    .sub { color: #555; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; margin-top: 6px; }
+    label { display: block; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: #888; margin-bottom: 6px; margin-top: 20px; }
+    input { width: 100%; background: #0a0a0a; border: 1px solid #222; color: #e0e0e0; padding: 10px 12px; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: #00ff88; }
+    button { width: 100%; margin-top: 24px; padding: 12px; background: #00ff88; color: #0a0a0a; border: none; font-family: inherit; font-size: 0.85rem; font-weight: bold; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s; }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .msg { margin-top: 16px; padding: 10px; font-size: 0.8rem; text-align: center; display: none; }
+    .msg.ok { background: #00ff8820; border: 1px solid #00ff8840; color: #00ff88; display: block; }
+    .msg.err { background: #ff004420; border: 1px solid #ff004440; color: #ff4466; display: block; }
+    footer { margin-top: 32px; font-size: 0.65rem; color: #333; letter-spacing: 0.1em; text-align: center; }
+    footer a { color: #444; text-decoration: none; }
+    footer a:hover { color: #00ff88; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>
+      </svg>
+      <h1>Project Void</h1>
+      <p class="sub">Key Redemption System</p>
+    </div>
+
+    <label for="key">Sua Key</label>
+    <input id="key" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" />
+
+    <label for="username">Seu Username (Roblox)</label>
+    <input id="username" type="text" placeholder="RobloxUser123" autocomplete="off" />
+
+    <button id="btn" onclick="redeem()">Resgatar Key</button>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <footer>
+    <a href="/login.html">Admin</a>
+  </footer>
+
+  <script>
+    async function redeem() {
+      const key = document.getElementById('key').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const btn = document.getElementById('btn');
+      const msg = document.getElementById('msg');
+
+      msg.className = 'msg';
+      msg.textContent = '';
+
+      if (!key || !username) {
+        msg.className = 'msg err';
+        msg.textContent = 'Preencha todos os campos.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+
+      try {
+        const res = await fetch('/api/keys/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyValue: key, username })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          msg.className = 'msg ok';
+          msg.textContent = '✓ Key resgatada com sucesso!';
+          btn.textContent = 'Resgatada!';
+        } else {
+          msg.className = 'msg err';
+          msg.textContent = data.error || 'Key inválida ou já usada.';
+          btn.disabled = false;
+          btn.textContent = 'Resgatar Key';
+        }
+      } catch {
+        msg.className = 'msg err';
+        msg.textContent = 'Erro de conexão. Tente novamente.';
+        btn.disabled = false;
+        btn.textContent = 'Resgatar Key';
+      }
+    }
+
+    document.getElementById('key').addEventListener('keydown', e => { if (e.key === 'Enter') redeem(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Void — Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #e0e0e0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; }
+    aside { width: 220px; min-height: 100vh; background: #111; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; flex-shrink: 0; }
+    .brand { padding: 24px 20px; border-bottom: 1px solid #1a1a1a; }
+    .brand h2 { color: #00ff88; font-size: 0.9rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .brand .who { color: #444; font-size: 0.7rem; margin-top: 6px; }
+    .brand .role { display: inline-block; padding: 2px 6px; font-size: 0.6rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid #00ff8840; color: #00ff88; background: #00ff8815; margin-left: 4px; }
+    nav { flex: 1; padding: 12px 8px; }
+    nav a { display: block; padding: 10px 14px; color: #555; text-decoration: none; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.15s, background 0.15s; border-radius: 2px; cursor: pointer; }
+    nav a:hover, nav a.active { color: #00ff88; background: #00ff8810; }
+    .logout-btn { margin: 12px 8px; padding: 10px 14px; background: none; border: none; color: #444; font-family: inherit; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; text-align: left; width: calc(100% - 16px); transition: color 0.15s; }
+    .logout-btn:hover { color: #ff4466; }
+    main { flex: 1; padding: 32px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h1 { color: #00ff88; font-size: 1rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 24px; border-bottom: 1px solid #1a1a1a; padding-bottom: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 32px; }
+    .stat { background: #111; border: 1px solid #1a1a1a; padding: 20px; }
+    .stat-val { font-size: 2rem; font-weight: bold; color: #00ff88; }
+    .stat-lbl { font-size: 0.65rem; color: #555; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-end; }
+    input, select { background: #0a0a0a; border: 1px solid #222; color: #e0e0e0; padding: 8px 10px; font-family: inherit; font-size: 0.85rem; outline: none; }
+    input:focus, select:focus { border-color: #00ff88; }
+    .btn { padding: 8px 18px; background: #00ff88; color: #0a0a0a; border: none; font-family: inherit; font-size: 0.75rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+    .btn:hover { opacity: 0.85; }
+    .btn.danger { background: transparent; border: 1px solid #ff004440; color: #ff4466; }
+    .btn.danger:hover { background: #ff004420; }
+    .btn.secondary { background: transparent; border: 1px solid #00ff8840; color: #00ff88; }
+    .btn.secondary:hover { background: #00ff8810; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th { text-align: left; padding: 8px 10px; color: #555; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid #1a1a1a; }
+    td { padding: 10px; border-bottom: 1px solid #111; vertical-align: middle; word-break: break-all; }
+    tr:hover td { background: #ffffff05; }
+    .badge { display: inline-block; padding: 2px 7px; font-size: 0.6rem; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; }
+    .badge.active { background: #00ff8815; border: 1px solid #00ff8840; color: #00ff88; }
+    .badge.redeemed { background: #4488ff15; border: 1px solid #4488ff40; color: #6699ff; }
+    .badge.expired { background: #ff004415; border: 1px solid #ff004440; color: #ff4466; }
+    .key-val { font-family: monospace; font-size: 0.85rem; color: #ccc; }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 14px; background: transparent; border: 1px solid #222; color: #555; font-family: inherit; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+    .filter-btn.active, .filter-btn:hover { border-color: #00ff8840; color: #00ff88; }
+    .copy-btn { padding: 2px 8px; background: transparent; border: 1px solid #333; color: #555; font-family: inherit; font-size: 0.65rem; cursor: pointer; }
+    .copy-btn:hover { border-color: #00ff8840; color: #00ff88; }
+    .empty { color: #333; text-align: center; padding: 40px; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #00ff88; color: #0a0a0a; padding: 10px 18px; font-size: 0.8rem; font-weight: bold; display: none; z-index: 999; }
+    @media (max-width: 600px) { body { flex-direction: column; } aside { width: 100%; min-height: auto; } }
+  </style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">
+    <h2>Void Admin</h2>
+    <div class="who" id="sidebar-user">—</div>
+  </div>
+  <nav>
+    <a class="active" onclick="showPage('dashboard')">Dashboard</a>
+    <a onclick="showPage('keys')">Keys</a>
+    <a onclick="showPage('create')">Gerar Keys</a>
+    <a id="nav-users" onclick="showPage('users')" style="display:none">Usuários</a>
+  </nav>
+  <button class="logout-btn" onclick="logout()">Sair</button>
+</aside>
+
+<main>
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <h1>Dashboard</h1>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total Keys</div></div>
+      <div class="stat"><div class="stat-val" id="s-active">—</div><div class="stat-lbl">Ativas</div></div>
+      <div class="stat"><div class="stat-val" id="s-redeemed">—</div><div class="stat-lbl">Usadas</div></div>
+      <div class="stat"><div class="stat-val" id="s-expired">—</div><div class="stat-lbl">Expiradas</div></div>
+    </div>
+  </div>
+
+  <!-- KEYS -->
+  <div id="page-keys" class="page">
+    <h1>Keys</h1>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterKeys('all', this)">Todas</button>
+      <button class="filter-btn" onclick="filterKeys('active', this)">Ativas</button>
+      <button class="filter-btn" onclick="filterKeys('redeemed', this)">Usadas</button>
+      <button class="filter-btn" onclick="filterKeys('expired', this)">Expiradas</button>
+    </div>
+    <div id="keys-table-wrap"><p class="empty">Carregando...</p></div>
+  </div>
+
+  <!-- CREATE -->
+  <div id="page-create" class="page">
+    <h1>Gerar Keys</h1>
+    <div class="form-row">
+      <div>
+        <div style="font-size:0.65rem;color:#555;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Quantidade</div>
+        <input id="gen-count" type="number" value="1" min="1" max="100" style="width:100px" />
+      </div>
+      <div>
+        <div style="font-size:0.65rem;color:#555;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Expira em (dias)</div>
+        <input id="gen-days" type="number" placeholder="Sem expiração" min="1" style="width:160px" />
+      </div>
+      <div>
+        <div style="font-size:0.65rem;color:#555;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Nota</div>
+        <input id="gen-note" type="text" placeholder="Opcional" style="width:200px" />
+      </div>
+      <button class="btn" onclick="generateKeys()">Gerar</button>
+    </div>
+    <div id="gen-result"></div>
+  </div>
+
+  <!-- USERS -->
+  <div id="page-users" class="page">
+    <h1>Usuários Admin</h1>
+    <div class="form-row" style="margin-bottom:28px">
+      <input id="new-user" type="text" placeholder="Username" style="width:160px" />
+      <input id="new-pass" type="password" placeholder="Senha" style="width:160px" />
+      <button class="btn" onclick="createUser()">Adicionar Admin</button>
+    </div>
+    <div id="users-table-wrap"><p class="empty">Carregando...</p></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentUser = null;
+  let currentFilter = 'all';
+
+  function token() { return localStorage.getItem('auth_token'); }
+  function headers() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token() }; }
+
+  function toast(msg, ok = true) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = ok ? '#00ff88' : '#ff4466';
+    t.style.color = ok ? '#0a0a0a' : '#fff';
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2500);
+  }
+
+  async function init() {
+    if (!token()) return (window.location.href = '/login.html');
+    const res = await fetch('/api/auth/me', { headers: headers() });
+    if (!res.ok) return (window.location.href = '/login.html');
+    currentUser = await res.json();
+    document.getElementById('sidebar-user').innerHTML =
+      currentUser.username + '<span class="role">' + currentUser.role + '</span>';
+    if (currentUser.role === 'owner') document.getElementById('nav-users').style.display = 'block';
+    loadStats();
+    loadKeys();
+  }
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'dashboard') loadStats();
+    if (name === 'keys') loadKeys();
+    if (name === 'users') loadUsers();
+  }
+
+  async function loadStats() {
+    const res = await fetch('/api/keys/stats', { headers: headers() });
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('s-total').textContent = d.totalKeys;
+    document.getElementById('s-active').textContent = d.activeKeys;
+    document.getElementById('s-redeemed').textContent = d.redeemedKeys;
+    document.getElementById('s-expired').textContent = d.expiredKeys;
+  }
+
+  async function loadKeys() {
+    const res = await fetch('/api/keys?status=' + currentFilter, { headers: headers() });
+    const d = await res.json();
+    const wrap = document.getElementById('keys-table-wrap');
+    if (!d.keys.length) { wrap.innerHTML = '<p class="empty">Nenhuma key encontrada</p>'; return; }
+
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th>Key</th><th>Status</th><th>Usado por</th><th>HWID</th><th>Expira</th><th>Ações</th>
+      </tr></thead>
+      <tbody>
+        ${d.keys.map(k => `<tr>
+          <td><span class="key-val">${k.key_value}</span>
+            <button class="copy-btn" onclick="copy('${k.key_value}')">copiar</button></td>
+          <td><span class="badge ${k.status}">${k.status}</span></td>
+          <td>${k.redeemed_by || '—'}</td>
+          <td style="font-size:0.7rem;color:#555">${k.hwid ? k.hwid.slice(0,16)+'...' : '—'}</td>
+          <td style="font-size:0.75rem">${k.expires_at ? new Date(k.expires_at).toLocaleDateString('pt-BR') : '∞'}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            ${k.status === 'redeemed' ? `<button class="btn secondary" style="font-size:0.65rem;padding:4px 10px" onclick="resetHwid(${k.id})">Reset HWID</button>` : ''}
+            <button class="btn danger" style="font-size:0.65rem;padding:4px 10px" onclick="deleteKey(${k.id})">Deletar</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function filterKeys(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadKeys();
+  }
+
+  async function deleteKey(id) {
+    if (!confirm('Deletar esta key?')) return;
+    await fetch('/api/keys/' + id, { method: 'DELETE', headers: headers() });
+    toast('Key deletada');
+    loadKeys();
+    loadStats();
+  }
+
+  async function resetHwid(id) {
+    await fetch('/api/keys/' + id + '/reset-hwid', { method: 'POST', headers: headers() });
+    toast('HWID resetado — key ativa novamente');
+    loadKeys();
+  }
+
+  async function generateKeys() {
+    const count = parseInt(document.getElementById('gen-count').value) || 1;
+    const days = parseInt(document.getElementById('gen-days').value) || null;
+    const note = document.getElementById('gen-note').value.trim();
+
+    const body = { count, note: note || undefined, expiresInDays: days || undefined };
+    const res = await fetch('/api/keys/bulk', { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+    const d = await res.json();
+
+    const wrap = document.getElementById('gen-result');
+    wrap.innerHTML = `<p style="color:#00ff88;font-size:0.75rem;margin-bottom:12px">✓ ${d.count} key(s) gerada(s)</p>
+      <div style="background:#0a0a0a;border:1px solid #1a1a1a;padding:16px;max-height:300px;overflow-y:auto">
+        ${d.keys.map(k => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="key-val">${k.key_value}</span>
+          <button class="copy-btn" onclick="copy('${k.key_value}')">copiar</button>
+        </div>`).join('')}
+      </div>
+      <button class="btn secondary" style="margin-top:12px" onclick="copyAll([${d.keys.map(k=>`'${k.key_value}'`).join(',')}])">Copiar Todas</button>`;
+
+    toast(d.count + ' key(s) gerada(s)');
+    loadStats();
+  }
+
+  async function loadUsers() {
+    const res = await fetch('/api/auth/users', { headers: headers() });
+    const d = await res.json();
+    const wrap = document.getElementById('users-table-wrap');
+    wrap.innerHTML = `<table>
+      <thead><tr><th>Username</th><th>Role</th><th>Criado em</th><th>Ação</th></tr></thead>
+      <tbody>
+        ${d.users.map(u => `<tr>
+          <td>${u.username}</td>
+          <td><span class="badge ${u.role === 'owner' ? 'active' : 'redeemed'}">${u.role}</span></td>
+          <td style="font-size:0.75rem">${new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+          <td>${u.role !== 'owner' ? `<button class="btn danger" style="font-size:0.65rem;padding:4px 10px" onclick="deleteUser(${u.id})">Remover</button>` : '—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  async function createUser() {
+    const username = document.getElementById('new-user').value.trim();
+    const password = document.getElementById('new-pass').value;
+    if (!username || !password) return toast('Preencha os campos', false);
+    const res = await fetch('/api/auth/users', { method: 'POST', headers: headers(), body: JSON.stringify({ username, password }) });
+    if (res.ok) { toast('Admin criado'); document.getElementById('new-user').value = ''; document.getElementById('new-pass').value = ''; loadUsers(); }
+    else { const d = await res.json(); toast(d.error || 'Erro', false); }
+  }
+
+  async function deleteUser(id) {
+    if (!confirm('Remover este admin?')) return;
+    await fetch('/api/auth/users/' + id, { method: 'DELETE', headers: headers() });
+    toast('Admin removido');
+    loadUsers();
+  }
+
+  function copy(text) { navigator.clipboard.writeText(text); toast('Copiado!'); }
+  function copyAll(keys) { navigator.clipboard.writeText(keys.join('\n')); toast('Todas copiadas!'); }
+
+  function logout() {
+    localStorage.removeItem('auth_token');
+    window.location.href = '/login.html';
+  }
+
+  init();
+</script>
+</body>
+</html>

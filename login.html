@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Void — Admin Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #e0e0e0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #111; border: 1px solid #1a1a1a; padding: 40px; width: 100%; max-width: 400px; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #00ff88; box-shadow: 0 0 15px #00ff88; opacity: 0.6; }
+    h1 { color: #00ff88; font-size: 1.4rem; letter-spacing: 0.3em; text-transform: uppercase; text-align: center; margin-bottom: 6px; }
+    .sub { color: #555; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; margin-bottom: 28px; }
+    label { display: block; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: #888; margin-bottom: 6px; margin-top: 18px; }
+    input { width: 100%; background: #0a0a0a; border: 1px solid #222; color: #e0e0e0; padding: 10px 12px; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: #00ff88; }
+    button { width: 100%; margin-top: 24px; padding: 12px; background: #00ff88; color: #0a0a0a; border: none; font-family: inherit; font-size: 0.85rem; font-weight: bold; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s; }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .err { margin-top: 14px; padding: 10px; background: #ff004420; border: 1px solid #ff004440; color: #ff4466; font-size: 0.8rem; text-align: center; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Void Admin</h1>
+    <p class="sub">Authorized Personnel Only</p>
+
+    <label>Username</label>
+    <input id="user" type="text" autocomplete="username" />
+
+    <label>Password</label>
+    <input id="pass" type="password" autocomplete="current-password" />
+
+    <button id="btn" onclick="login()">Access System</button>
+    <div id="err" class="err"></div>
+  </div>
+
+  <script>
+    async function login() {
+      const username = document.getElementById('user').value.trim();
+      const password = document.getElementById('pass').value;
+      const btn = document.getElementById('btn');
+      const err = document.getElementById('err');
+
+      err.style.display = 'none';
+      if (!username || !password) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Authenticating...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          localStorage.setItem('auth_token', data.token);
+          window.location.href = '/admin.html';
+        } else {
+          err.textContent = data.error || 'Credenciais inválidas.';
+          err.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Access System';
+        }
+      } catch {
+        err.textContent = 'Erro de conexão.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Access System';
+      }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  </script>
+</body>
+</html>
